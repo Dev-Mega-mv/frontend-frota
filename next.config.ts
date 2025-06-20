@@ -1,6 +1,5 @@
 const nextConfig = {
-  reactDevOverlay: false,
-  devIndicators: { buildActivity: false },
+  output: "export",
 };
 
 export default nextConfig;
