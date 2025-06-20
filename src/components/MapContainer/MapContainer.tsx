@@ -1,4 +1,3 @@
-// src/components/MapContainer/MapContainer.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -10,186 +9,220 @@ import {
 } from "@react-google-maps/api";
 import { useMediaQuery } from "usehooks-ts";
 import { useEstabelecimentos } from "@/context/EstabelecimentosContext";
+import { fetchEstabelecimentosByRadius } from "@/services/api";
+import { MarkerType } from "@/types/marker";
+import { SuggestionModal } from "@/components/SuggestionModal/SuggestionModal";
 
-export default function MapContainer() {
-  const { markers, selectedMarker, setSelectedMarker, loading } =
-    useEstabelecimentos();
+const DEFAULT_RADIUS = 20_000; // 20 km
+const BRAZIL_CENTER = { lat: -14.235004, lng: -51.92528 };  // centro aproximado do Brasil
 
-  // Índice da InfoWindow aberta
-  const [openInfoWindowIdx, setOpenInfoWindowIdx] = useState<number | null>(
-    null
-  );
-  // Geolocalização do usuário
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; } | null>(
-    null
-  );
+interface Props {
+  overrideCenter?: { lat: number; lng: number } | null;
+}
 
-  // Calcular altura do mapa descontando Navbar
-  const isMobileViewport = useMediaQuery("(max-width:1024px)");
-  const navbarHeight = isMobileViewport ? 72 : 80;
-  const containerStyle = {
-    width: "100%",
-    height: `calc(100vh - ${navbarHeight}px)`,
-  };
+export default function MapContainer({ overrideCenter }: Props) {
+  const { selectedMarker, setSelectedMarker } = useEstabelecimentos();
 
-  // Pega localização
+  // 1) localização real do usuário
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // 2) centro usado para buscar postos
+  const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
+  // 3) lista de marcadores retornados pela API
+  const [markers, setMarkers] = useState<MarkerType[]>([]);
+  const [loadingMarkers, setLoadingMarkers] = useState(true);
+  // 4) estado de zoom dinâmico
+  const [zoom, setZoom] = useState<number>(12);
+  // 5) marker de busca (overrideCenter)
+  const [searchMarker, setSearchMarker] = useState<{ lat: number; lng: number } | null>(null);
+  // 6) controle do modal de sugestão/report
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+
+  const isMobile = useMediaQuery("(max-width:1024px)");
+  const navbarH = isMobile ? 72 : 80;
+  const containerStyle = { width: "100%", height: `calc(100vh - ${navbarH}px)` };
+
+  // 1) geolocalização
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) =>
-          setUserLocation({ lat: coords.latitude, lng: coords.longitude }),
-        () => { },
-        { enableHighAccuracy: true }
-      );
-    }
+    navigator.geolocation?.getCurrentPosition(
+      ({ coords }) => {
+        const loc = { lat: coords.latitude, lng: coords.longitude };
+        setUserLocation(loc);
+        setCenter(loc);
+        setZoom(12);  // zoom padrão próximo
+      },
+      () => {
+        // se negar, centraliza e afasta
+        setCenter(BRAZIL_CENTER);
+        setZoom(5);    // zoom afastado para mostrar quase todo o Brasil
+      },
+      { enableHighAccuracy: true }
+    );
   }, []);
 
-  // Carrega script Google Maps
+
+  // Quando o overrideCenter (vindo da SearchBar) mudar
+  useEffect(() => {
+    if (!overrideCenter) return;
+    setSelectedMarker(null);
+    setCenter(overrideCenter);
+    setSearchMarker(overrideCenter);
+    setZoom(15);
+  }, [overrideCenter, setSelectedMarker]);
+
+  // Busca os postos a cada mudança de center
+  useEffect(() => {
+    if (!center) return;
+    setLoadingMarkers(true);
+    fetchEstabelecimentosByRadius(center.lat, center.lng, DEFAULT_RADIUS)
+      .then((data) => setMarkers(data))
+      .finally(() => setLoadingMarkers(false));
+  }, [center]);
+
+  // Carrega Google Maps + Places (biblioteca fixa)
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: ["places"] as const,
   });
 
-  // Ícone dos postos
+  // Ícones customizados
   const postoIcon = useMemo(() => {
     if (!isLoaded || !window.google?.maps) return undefined;
     return {
-      url: "/icons/posto.png",
-      scaledSize: new window.google.maps.Size(40, 40),
-      anchor: new window.google.maps.Point(20, 40),
+      url: "/icons/posto-4.svg",
+      scaledSize: new window.google.maps.Size(32, 32),
+      anchor: new window.google.maps.Point(16, 32),
     };
   }, [isLoaded]);
-
-  // Ícone da localização do usuário
   const userIcon = useMemo(() => {
     if (!isLoaded || !window.google?.maps) return undefined;
     return {
-      url: "/icons/my-location.png",
-      scaledSize: new window.google.maps.Size(36, 36),
-      anchor: new window.google.maps.Point(18, 36),
+      url: "/icons/my-location.svg",
+      scaledSize: new window.google.maps.Size(32, 32),
+      anchor: new window.google.maps.Point(16, 32),
     };
   }, [isLoaded]);
 
-  // Sincroniza seleção com InfoWindow
-  useEffect(() => {
-    if (!selectedMarker) {
-      setOpenInfoWindowIdx(null);
-      return;
-    }
-    const idx = markers.findIndex(
-      (m) =>
-        m.lat === selectedMarker.lat &&
-        m.lng === selectedMarker.lng &&
-        m.nome === selectedMarker.nome
-    );
-    setOpenInfoWindowIdx(idx >= 0 ? idx : null);
-  }, [selectedMarker, markers]);
-
-  // Estados de erro/carregamento
+  // Loading / errors
   if (loadError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-white">
-        <span className="text-red-500 font-medium">Erro ao carregar o mapa</span>
+        <span className="text-red-500">Erro ao carregar o mapa</span>
       </div>
     );
   }
   if (!isLoaded) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-white">
-        <span className="text-slate-500 font-medium">Carregando mapa…</span>
+        <span className="text-slate-500">Carregando mapa…</span>
       </div>
     );
   }
-  if (loading) {
+  if (loadingMarkers) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-white">
-        <span className="text-slate-500 font-medium">Carregando postos…</span>
+        <span className="text-slate-500">Carregando postos…</span>
       </div>
     );
   }
 
-  // Opções do mapa: removendo todos os controles
-  const mapOptions: google.maps.MapOptions = {
-    disableDefaultUI: true,       // desabilita zoom, street view, etc.
-    zoomControl: false,           // garante que o zoom também está desligado
-    fullscreenControl: false,
-    mapTypeControl: false,
-    streetViewControl: false,
-    rotateControl: false,
-    scaleControl: false,
-    clickableIcons: false,
-    gestureHandling: "greedy",
-    styles: [
-      { featureType: "all", elementType: "geometry.fill", stylers: [{ saturation: -5 }, { lightness: 5 }] },
-      { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#e3f2fd" }] },
-      { featureType: "road.highway", elementType: "geometry.fill", stylers: [{ color: "#f8f9fa" }] },
-      { featureType: "road.arterial", elementType: "geometry.fill", stylers: [{ color: "#ffffff" }] },
-      { featureType: "landscape.natural", elementType: "geometry.fill", stylers: [{ color: "#f1f8e9" }] },
-      { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-    ],
-  };
-
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={
-        selectedMarker
-          ? { lat: selectedMarker.lat, lng: selectedMarker.lng }
-          : userLocation || { lat: -20.813153, lng: -49.393445 }
-      }
-      zoom={14}
-      options={mapOptions}
-    >
-      {/* Marcador do usuário */}
-      {userLocation && (
-        <Marker
-          position={userLocation}
-          icon={userIcon}
-          zIndex={999}
-          title="Sua localização"
-        />
-      )}
+    <>
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center!}
+        zoom={zoom}
+        options={{
+          disableDefaultUI: true,
+          clickableIcons: false,
+          gestureHandling: "greedy",
+        }}
+        onClick={() => {
+          setSelectedMarker(null);
+          setSearchMarker(null);
+        }}
+      >
+        {/* Marcador do usuário real (só quando não há overrideCenter) */}
+        {userLocation && !overrideCenter && (
+          <Marker
+            position={userLocation}
+            icon={userIcon}
+            zIndex={999}
+            title="Você está aqui"
+          />
+        )}
 
-      {/* Marcadores de postos */}
-      {markers.map((m, i) => (
-        <Marker
-          key={i}
-          position={{ lat: m.lat, lng: m.lng }}
-          icon={m.tipo === "posto" ? postoIcon : undefined}
-          onClick={() => setSelectedMarker(m)}
-          title={m.nome}
-        >
-          {openInfoWindowIdx === i && (
-            <InfoWindow
-              onCloseClick={() => setSelectedMarker(null)}
-              options={{
-                pixelOffset: new window.google.maps.Size(0, -10),
-                maxWidth: 420,
-              }}
-            >
-              <div className="bg-white rounded-lg shadow-lg w-80 overflow-visible">
-                <div className="px-4 py-2">
-                  <h3 className="text-slate-800 text-base font-semibold">
-                    {m.nome}
-                  </h3>
+        {/* Marcador provisório de busca */}
+        {searchMarker && (
+          <Marker
+            position={searchMarker}
+            icon={userIcon}
+            zIndex={998}
+            title="Local pesquisado"
+          />
+        )}
+
+        {/* Marcadores de postos */}
+        {markers.map((m, i) => (
+          <Marker
+            key={i}
+            position={{ lat: m.lat, lng: m.lng }}
+            icon={postoIcon}
+            onClick={() => {
+              setSelectedMarker(m);
+              setSearchMarker(null);
+              setZoom(14);
+            }}
+            title={m.nome}
+          >
+            {selectedMarker === m && (
+              <InfoWindow onCloseClick={() => setSelectedMarker(null)}>
+                <div
+                  className={`
+                    bg-white rounded-xl shadow-lg overflow-visible
+                    w-full max-w-[90vw] sm:max-w-[20rem]
+                  `}
+                >
+                  <div className="px-4 pt-3 pb-1 border-b border-gray-200">
+                    <h3 className="text-base font-bold text-gray-800">
+                      {m.nome}
+                    </h3>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {m.endereco}
+                    </p>
+                  </div>
+                  <div className="px-4 py-3 space-y-2">
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full bg-[#00ba7f] hover:bg-[#00a36b]
+                                 text-white text-center font-semibold py-2 rounded-lg"
+                    >
+                      Ir até o local
+                    </a>
+                    {/* Botão que abre o formulário de report */}
+                    <button
+                      onClick={() => setShowSuggestModal(true)}
+                      className="block w-full border-2 border-[#ff365b]
+                                 text-[#ff365b] hover:bg-[#ffe2e8]
+                                 text-center font-semibold py-2 rounded-lg"
+                    >
+                      Reportar Posto
+                    </button>
+                  </div>
                 </div>
-                <div className="px-4 pb-3 text-sm text-slate-700">
-                  <p className="whitespace-normal break-words leading-relaxed mb-3">
-                    {m.endereco}
-                  </p>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center text-sm font-medium py-2 rounded"
-                  >
-                    Ir até o local
-                  </a>
-                </div>
-              </div>
-            </InfoWindow>
-          )}
-        </Marker>
-      ))}
-    </GoogleMap>
+              </InfoWindow>
+            )}
+          </Marker>
+        ))}
+      </GoogleMap>
+
+      {/* Modal de relatório/sugestão */}
+      <SuggestionModal
+        visible={showSuggestModal}
+        onClose={() => setShowSuggestModal(false)}
+        marker={selectedMarker ?? undefined}
+      />
+    </>
   );
 }

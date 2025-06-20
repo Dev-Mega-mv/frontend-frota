@@ -1,15 +1,40 @@
 @import "tailwindcss";
 
-html, body, #__next {
+html,
+body,
+#__next {
   height: 100%;
   margin: 0;
   padding: 0;
   background: #fff;
-  overflow: hidden; /* impede qualquer scroll vertical */
+  color-scheme: light;
+  color: #1f2937;
+  overflow: hidden;
+  /* impede qualquer scroll vertical */
 }
 
 /* Oculta o painel de Issues do Next.js em Dev */
-#__next > .next-dev-issues,
-#__next > .next-dev-overlay {
+#__next>.next-dev-issues,
+#__next>.next-dev-overlay {
   display: none !important;
+}
+
+/* 1) Remove bordas e sombras do InfoWindow padrão */
+.gm-style .gm-style-iw {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 2) Permite que o “tail” (pontinha) fique livre e o conteúdo possa vazar */
+.gm-style .gm-style-iw-d,
+.gm-style .gm-style-iw-t::after {
+  overflow: visible !important;
+}
+
+/* 3) Ajusta responsivamente a largura interna do seu card */
+.custom-info-window {
+  width: 90vw;
+  /* até 90% da tela em mobile */
+  max-width: 18rem;
+  /* a partir de sm (~640px), fica em 18rem */
 }

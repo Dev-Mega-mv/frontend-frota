@@ -1,39 +1,47 @@
 "use client";
 
-import React, {
+import {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
+  FC,
 } from "react";
+import { fetchEstabelecimentos } from "@/services/api";
 import { MarkerType } from "@/types/marker";
-import { fetchEstabelecimentos } from "@/services/estabelecimentos";
 
 interface EstContextType {
   markers: MarkerType[];
-  selectedMarker: MarkerType | null;
-  setSelectedMarker: React.Dispatch<React.SetStateAction<MarkerType | null>>;
   loading: boolean;
+  selectedMarker: MarkerType | null;
+  setSelectedMarker: (m: MarkerType | null) => void;
 }
 
 const EstContext = createContext<EstContextType | undefined>(undefined);
 
-export const EstabelecimentosProvider = ({ children }: { children: ReactNode; }) => {
+export const EstabelecimentosProvider: FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [markers, setMarkers] = useState<MarkerType[]>([]);
-  const [selectedMarker, setSelectedMarker] = useState<MarkerType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedMarker, setSelectedMarker] = useState<MarkerType | null>(
+    null
+  );
 
   useEffect(() => {
-    fetchEstabelecimentos()
-      .then((data) => setMarkers(data))
-      .catch(() => setMarkers([]))
-      .finally(() => setLoading(false));
+    async function load() {
+      setLoading(true);
+      const data = await fetchEstabelecimentos(); // chama GET http://localhost:3333/estabelecimentos
+      setMarkers(data);
+      setLoading(false);
+    }
+    load();
   }, []);
 
   return (
     <EstContext.Provider
-      value={{ markers, selectedMarker, setSelectedMarker, loading }}
+      value={{ markers, loading, selectedMarker, setSelectedMarker }}
     >
       {children}
     </EstContext.Provider>
@@ -41,10 +49,10 @@ export const EstabelecimentosProvider = ({ children }: { children: ReactNode; })
 };
 
 export function useEstabelecimentos() {
-  const context = useContext(EstContext);
-  if (!context)
+  const ctx = useContext(EstContext);
+  if (!ctx)
     throw new Error(
       "useEstabelecimentos must be used within an EstabelecimentosProvider"
     );
-  return context;
+  return ctx;
 }
