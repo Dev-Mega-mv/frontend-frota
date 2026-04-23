@@ -9,13 +9,18 @@ import Sidebar from "@/components/Sidebar/Sidebar";
 import { AdBanner } from "@/components/AdBanner/AdBanner";
 import MobileFooter from "@/components/MobileFooter/MobileFooter";
 
-interface MainLayoutProps { children: ReactNode; }
+interface MainLayoutProps {
+  children: ReactNode;
+}
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const isMobile = useMediaQuery("(max-width:640px)");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchCenter, setSearchCenter] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   return (
     <EstabelecimentosProvider>
@@ -23,7 +28,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <Navbar
           isMobile={isMobile}
           menuOpen={menuOpen}
-          onMenuToggle={() => setMenuOpen(o => !o)}
+          onMenuToggle={() => setMenuOpen((o) => !o)}
           onSelectLocation={(lat, lng) => setSearchCenter({ lat, lng })}
         />
 
@@ -31,18 +36,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {/* passamos o searchCenter também */}
           <MapContainer overrideCenter={searchCenter} />
 
-          <AdBanner
+          {/* <AdBanner
             images={["/banners/Porque-usar-megavale.jpg"]}
             links={["https://www.megavalecard.com.br/"]}
-          />
+          /> */}
 
           <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
         </div>
 
         <MobileFooter
           onSupport={() => window.open("https://wa.me/5511933357047?text=Olá…")}
-          onSearchOpen={() => document.querySelector<HTMLInputElement>("input[placeholder*='Buscar']")?.focus()}
-          onMenuToggle={() => setMenuOpen(o => !o)}
+          onSearchOpen={() =>
+            document
+              .querySelector<HTMLInputElement>("input[placeholder*='Buscar']")
+              ?.focus()
+          }
+          onMenuToggle={() => setMenuOpen((o) => !o)}
         />
       </div>
     </EstabelecimentosProvider>
