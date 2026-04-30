@@ -53,10 +53,7 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
   return (
     <>
       {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/40 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
 
       {/* Sidebar */}
       <aside className="fixed top-0 right-0 h-full w-80 sm:w-96 bg-white shadow-2xl flex flex-col z-50 overflow-hidden">
@@ -97,8 +94,12 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
                   <HelpCircle size={20} className="text-white" />
                 </div>
                 <div className="text-left">
-                  <span className="font-semibold text-gray-800">Dúvidas Frequentes</span>
-                  <p className="text-sm text-gray-500">Respostas para perguntas comuns</p>
+                  <span className="font-semibold text-gray-800">
+                    Dúvidas Frequentes
+                  </span>
+                  <p className="text-sm text-gray-500">
+                    Respostas para perguntas comuns
+                  </p>
                 </div>
               </div>
               {openFaq ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -129,11 +130,19 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
                   <Fuel size={20} className="text-white" />
                 </div>
                 <div className="text-left">
-                  <span className="font-semibold text-gray-800">Indique um Posto</span>
-                  <p className="text-sm text-gray-500">Ajude a expandir nossa rede</p>
+                  <span className="font-semibold text-gray-800">
+                    Indique um Posto
+                  </span>
+                  <p className="text-sm text-gray-500">
+                    Ajude a expandir nossa rede
+                  </p>
                 </div>
               </div>
-              {openIndique ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              {openIndique ? (
+                <ChevronUp size={20} />
+              ) : (
+                <ChevronDown size={20} />
+              )}
             </button>
 
             {openIndique && (
@@ -159,8 +168,12 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
                   <Headset size={20} className="text-white" />
                 </div>
                 <div className="text-left">
-                  <span className="font-semibold text-gray-800">Fale Conosco</span>
-                  <p className="text-sm text-gray-500">Entre em contato com nosso suporte</p>
+                  <span className="font-semibold text-gray-800">
+                    Fale Conosco
+                  </span>
+                  <p className="text-sm text-gray-500">
+                    Entre em contato com nosso suporte
+                  </p>
                 </div>
               </div>
               {openFale ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -168,12 +181,17 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
             {openFale && (
               <div className="border-t border-gray-100 bg-gray-50 p-4 space-y-3">
                 <a
-                  href="https://wa.me/5511933357047?text=Olá,%20venho%20do%20aplicativo%20frota%20e%20preciso%20de%20suporte!"
+                  href="https://wa.me/551135040770?text=Olá,%20venho%20do%20aplicativo%20frota%20e%20preciso%20de%20suporte!"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 bg-emerald-500 text-white p-3 rounded-xl hover:bg-emerald-600 transition"
                 >
-                  <Image src="/icons/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
+                  <Image
+                    src="/icons/whatsapp.svg"
+                    alt="WhatsApp"
+                    width={20}
+                    height={20}
+                  />
                   <p className="font-medium">WhatsApp</p>
                   <ExternalLink size={16} className="ml-auto" />
                 </a>
@@ -193,7 +211,9 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
         {/* Footer */}
         <div className="px-6 pb-6">
           <div className="bg-[#fe415e] rounded-lg p-4 text-white text-center">
-            <p className="text-sm opacity-90 font-medium">Megavale Card © 2025</p>
+            <p className="text-sm opacity-90 font-medium">
+              Megavale Card © 2025
+            </p>
             <p className="text-xs opacity-75">Versão 1.0.0</p>
           </div>
         </div>
