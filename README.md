@@ -1,8 +1,7 @@
 
 # 🚗 Cartão Frota - Localizador de Estabelecimentos
 
-Este projeto é uma aplicação web desenvolvida com **Next.js**, **React**, **Tailwind CSS** e integração com a **API do Google Maps**, com o objetivo de exibir no mapa os estabelecimentos que aceitam o **Cartão Frota Good Card Megavale**.
-
+Este projeto é uma aplicação web desenvolvida com **Next.js**, **React**, **Tailwind CSS** e integração com a **API do Google Maps**, com o objetivo de exibir no mapa os estabelecimentos que aceitam o **Cartão Frota Megavale**.
 ---
 
 ## 🔧 Tecnologias Utilizadas

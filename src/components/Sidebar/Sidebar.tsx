@@ -23,7 +23,7 @@ const faqs = [
   {
     question: "Para que serve este aplicativo?",
     answer:
-      "Este app permite consultar os postos de combustível credenciados onde o Cartão Megavale Frota Good Card é aceito.",
+      "Este app permite consultar os postos de combustível credenciados onde o Cartão Megavale Frota é aceito.",
   },
   {
     question: "Como faço para encontrar um posto credenciado?",
@@ -70,7 +70,7 @@ export const Sidebar: FC<SidebarProps> = ({ open, onClose }) => {
             </div>
             <div>
               <h2 className="text-2xl font-bold">Megavale</h2>
-              <p className="text-yellow-100 text-sm">Frota Good Card</p>
+              <p className="text-yellow-100 text-sm">Frota</p>
             </div>
           </div>
           <button

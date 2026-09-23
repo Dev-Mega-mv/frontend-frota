@@ -19,7 +19,7 @@ const WelcomePage = () => {
 
                 {/* Frase */}
                 <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-                    Encontre postos credenciados da rede Frota Good Card de forma rápida e fácil
+                    Encontre postos credenciados da rede Frota de forma rápida e fácil
                 </p>
 
                 {/* Botão */}

@@ -18,7 +18,7 @@ export default function WelcomePage() {
           {/*<span className="bg-clip-text text-transparent bg-gradient-to-br from-pink-500 via-yellow-500 to-cyan-500">Megavale</span>*/}
         </h1>
         <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-          Encontre postos credenciados da rede Megavale Frota Good Card de forma rápida e fácil
+          Encontre postos credenciados da rede Megavale Frota de forma rápida e fácil
         </p>
         <button
           onClick={() => router.push("/map")}
